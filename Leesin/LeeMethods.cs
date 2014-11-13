@@ -10,10 +10,10 @@ namespace Leesin
     {
         public static readonly Obj_AI_Hero Player = ObjectManager.Player;
 
-        public static Spell Q = new Spell(SpellSlot.Q, 1100),
+        public static readonly Spell Q = new Spell(SpellSlot.Q, 1100),
             W = new Spell(SpellSlot.W, 700),
             E = new Spell(SpellSlot.E, 350),
-            R = new Spell(SpellSlot.R, 375),;
+            R = new Spell(SpellSlot.R, 375);
 
         private static Vector3 _harassInitialVector3;
         private static HarassStage harassStage = HarassStage.Nothing;

@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
+using SharpDX;
+using Color = System.Drawing.Color;
 
 namespace Leesin
 {
@@ -10,6 +13,7 @@ namespace Leesin
         public static Menu Menu;
         public static Orbwalking.Orbwalker Orbwalker;
         public static bool StealthChampiopns;
+        public static List<Spell> SpellList = new List<Spell>();
         public Config()
         {
             StealthChampiopns = ObjectManager.Get<Obj_AI_Hero>().Any(hero => hero.IsEnemy && (hero.ChampionName == "Akali" || hero.ChampionName == "Wukong"));
@@ -93,16 +97,6 @@ namespace Leesin
             Menu.SubMenu("KillSteal").AddItem(new MenuItem("rOverKill", "% R overkill").SetValue(new Slider(50))); //Done
             Menu.SubMenu("KillSteal").AddItem(new MenuItem("useRCollisionKS", "Use R to kill knockable").SetValue(true)); //Partial Done
             //
-            //Misc Menu
-            //
-            Menu.AddSubMenu(new Menu("Misc Settings", "Misc"));
-            if (StealthChampiopns)
-            {
-                Menu.SubMenu("Misc").AddItem(new MenuItem("autoEEStealth", "Auto reaveal stealth champions(EE).").SetValue(true));     //Done           
-            }
-            Menu.SubMenu("Misc").AddItem(new MenuItem("wardJump", "Ward Jump").SetValue(new KeyBind("A".ToCharArray()[0], KeyBindType.Press))); //Done
-            Menu.SubMenu("Misc").AddItem(new MenuItem("packetCast", "Packet Cast").SetValue(false));                //Done
-            //
             //Jungle Menu
             //
             Menu.AddSubMenu(new Menu("Jungle Settings", "Jungle"));
@@ -120,7 +114,30 @@ namespace Leesin
             }
             Menu.SubMenu("Jungle")
                 .AddItem(new MenuItem("stealCamp", "Steal (toggeled) Camp").SetValue(new KeyBind("N".ToCharArray()[0], KeyBindType.Press)));
+            //
+            //Drawing Menu
+            //
+            Menu.AddSubMenu(new Menu("Draw Settings", "Draw"));
+            foreach (var spell in SpellList)
+            {
+                Menu.SubMenu("Draw")
+                    .AddItem(
+                        new MenuItem(spell.Slot + "Draw", "Draw " + spell.Slot + "range").SetValue(
+                            new Circle(true, Color.FromArgb(128, 128, 0, 128))));
+            }
+            //
+            //Misc Menu
+            //
+            Menu.AddSubMenu(new Menu("Misc Settings", "Misc"));
+            if (StealthChampiopns)
+            {
+                Menu.SubMenu("Misc").AddItem(new MenuItem("autoEEStealth", "Auto reaveal stealth champions(EE).").SetValue(true));     //Done           
+            }
+            Menu.SubMenu("Misc").AddItem(new MenuItem("wardJump", "Ward Jump").SetValue(new KeyBind("A".ToCharArray()[0], KeyBindType.Press))); //Done
+            Menu.SubMenu("Misc").AddItem(new MenuItem("packetCast", "Packet Cast").SetValue(false));                //Done
+            //Add to main menu
             Menu.AddToMainMenu();
+
         }
     }
 }

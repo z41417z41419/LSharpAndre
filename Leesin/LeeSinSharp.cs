@@ -19,6 +19,11 @@ namespace Leesin
             FlashSlot = LeeMethods.Player.GetSpellSlot("summonerflash");
             LeeMethods.Q.SetSkillshot(0.25f, 65f, 1800f, true, SkillshotType.SkillshotLine);
             LeeMethods.R.SetTargetted(0.25f, float.MaxValue);
+            Config.SpellList.Add(LeeMethods.Q);
+            Config.SpellList.Add(LeeMethods.W);
+            Config.SpellList.Add(LeeMethods.E);
+            Config.SpellList.Add(LeeMethods.R);
+
             // ReSharper disable once ObjectCreationAsStatement
             new Config();
             if (Config.StealthChampiopns)
@@ -32,6 +37,14 @@ namespace Leesin
 
         private void OnDraw(EventArgs args)
         {
+            foreach (var spell in Config.SpellList)
+            {
+                var menuItem = Config.Menu.Item(spell.Slot + "Draw").GetValue<Circle>();
+                if (menuItem.Active)
+                {
+                    Utility.DrawCircle(ObjectManager.Player.Position, spell.Range, menuItem.Color);                    
+                }
+            }
             //Drawing.DrawText(100, 100, Color.White, "Harass Stage: " + LeeMethods.harassStage);
             //Console.WriteLine(ObjectManager.Player.BoundingRadius);
         }
