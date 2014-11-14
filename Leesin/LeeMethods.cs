@@ -153,6 +153,10 @@ namespace Leesin
                 !R.IsReady() || !Q.IsReady() ||
                 Q.Instance.Name != "BlindMonkQOne")
             {
+                if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active || Config.Menu.Item("insec2").GetValue<KeyBind>().Active)
+                {
+                    Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);                    
+                }
                 return;
             }
             var useFlash = (LeeUtility.MenuParamBool("useFlashInsec") &&
@@ -185,6 +189,11 @@ namespace Leesin
                             delay * 2 + 250, () => R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast")));
                     }
                 }
+                else
+                {
+                    Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);                    
+                }
+          
             }
             else if (Config.Menu.Item("insec2").GetValue<KeyBind>().Active)
             {
