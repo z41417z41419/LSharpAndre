@@ -15,6 +15,7 @@ namespace Leesin
 
         public LeeSinSharp()
         {
+            LeeMethods.Player = ObjectManager.Player;
             SmiteSlot = LeeMethods.Player.GetSpellSlot("SummonerSmite");
             FlashSlot = LeeMethods.Player.GetSpellSlot("summonerflash");
             LeeMethods.Q.SetSkillshot(0.25f, 65f, 1800f, true, SkillshotType.SkillshotLine);

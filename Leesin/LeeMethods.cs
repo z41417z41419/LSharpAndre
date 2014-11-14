@@ -8,7 +8,7 @@ namespace Leesin
 {
     internal static class LeeMethods
     {
-        public static readonly Obj_AI_Hero Player = ObjectManager.Player;
+        public static Obj_AI_Hero Player;
 
         public static readonly Spell Q = new Spell(SpellSlot.Q, 1100),
             W = new Spell(SpellSlot.W, 700),
@@ -16,7 +16,7 @@ namespace Leesin
             R = new Spell(SpellSlot.R, 375);
 
         private static Vector3 _harassInitialVector3;
-        private static HarassStage harassStage = HarassStage.Nothing;
+        private static HarassStage _harassStage = HarassStage.Nothing;
         public static readonly string[] JungleCamps = { "Worm", "Dragon", "LizardElder", "AncientGolem" };
         public static readonly string[] SmallMinionCamps = { "Wraith", "Golem", "GreatWraith", "GiantWolf" };
 
@@ -24,16 +24,16 @@ namespace Leesin
         {
             if (!targetHero.IsValidTarget())
             {
-                harassStage = HarassStage.Nothing;
+                _harassStage = HarassStage.Nothing;
                 return;
             }
-            switch (harassStage)
+            switch (_harassStage)
             {
                 case HarassStage.Nothing:
-                    harassStage = HarassStage.Started;
+                    _harassStage = HarassStage.Started;
                     break;
                 case HarassStage.Started:
-                    harassStage = HarassStage.Doing;
+                    _harassStage = HarassStage.Doing;
                     if (E.IsReady() &&
                         Vector3.DistanceSquared(Player.ServerPosition, targetHero.ServerPosition) <= 350 * 350 &&
                         LeeUtility.MenuParamBool("UseE1H"))
@@ -45,7 +45,7 @@ namespace Leesin
                                 250 - Game.Ping / 2 + 10, () =>
                                 {
                                     E.Cast(Player, true);
-                                    harassStage = LeeUtility.MenuParamBool("UseQ1H") && Q.IsReady()
+                                    _harassStage = LeeUtility.MenuParamBool("UseQ1H") && Q.IsReady()
                                         ? HarassStage.Doing
                                         : HarassStage.Finished;
                                 });
@@ -53,7 +53,7 @@ namespace Leesin
                     }
                     else
                     {
-                        harassStage = HarassStage.Finished;
+                        _harassStage = HarassStage.Finished;
                     }
                     if (Q.IsReady() && LeeUtility.MenuParamBool("UseQ1H"))
                     {
@@ -67,16 +67,16 @@ namespace Leesin
                                     Q.Cast();
                                     _harassInitialVector3 = Player.ServerPosition;
                                 });
-                            Utility.DelayAction.Add(delay * 2, () => harassStage = HarassStage.Finished);
+                            Utility.DelayAction.Add(delay * 2, () => _harassStage = HarassStage.Finished);
                         }
                         else
                         {
-                            harassStage = HarassStage.Finished;
+                            _harassStage = HarassStage.Finished;
                         }
                     }
                     else
                     {
-                        harassStage = HarassStage.Finished;
+                        _harassStage = HarassStage.Finished;
                     }
                     break;
                 case HarassStage.Doing:
@@ -86,7 +86,7 @@ namespace Leesin
                     {
                         LeeUtility.WardJump(_harassInitialVector3, LeeUtility.MenuParamBool("UseWardWH"));
                     }
-                    harassStage = HarassStage.Nothing;
+                    _harassStage = HarassStage.Nothing;
                     break;
             }
         }
@@ -174,7 +174,13 @@ namespace Leesin
                     if (useFlash)
                     {
                         Utility.DelayAction.Add(
-                            delay * 2, () => R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast")));
+                            delay * 2, () =>
+                            {
+                                if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <= 375 * 375)
+                                {
+                                    R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast"));                                    
+                                }
+                            });
                         Utility.DelayAction.Add(
                             delay * 2 + 200 - Game.Ping,
                             () =>
@@ -188,10 +194,6 @@ namespace Leesin
                         Utility.DelayAction.Add(
                             delay * 2 + 250, () => R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast")));
                     }
-                }
-                else
-                {
-                    Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);                    
                 }
           
             }
