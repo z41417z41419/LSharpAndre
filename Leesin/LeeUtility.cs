@@ -47,7 +47,7 @@ namespace Leesin
             else if (championList.Count > 0 && MenuParamBool("insectToAlly"))
             {
                 var midPoint = new Vector2();
-                foreach (Obj_AI_Hero hero in championList)
+                foreach (var hero in championList)
                 {
                     midPoint.X += hero.ServerPosition.X;
                     midPoint.Y += hero.ServerPosition.Y;
@@ -118,11 +118,11 @@ namespace Leesin
             var casted = false;
             var qPrediction = LeeMethods.Q.GetPrediction(target);
             var useSmite = LeeSinSharp.SmiteSlot != SpellSlot.Unknown &&
-                            LeeMethods.Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.SmiteSlot) == SpellState.Ready &&
-                            (qPrediction.CollisionObjects.Count == 1 && qPrediction.Hitchance.Equals(HitChance.High) &&
-                             ((qMode == QMode.Combo && MenuParamBool("smiteCombo")) ||
-                              (qMode == QMode.Insec && MenuParamBool("smiteInsec")) ||
-                              (qMode == QMode.Harass && MenuParamBool("smiteHarass"))));
+                           LeeMethods.Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.SmiteSlot) == SpellState.Ready &&
+                           (qPrediction.CollisionObjects.Count == 1 && qPrediction.Hitchance.Equals(HitChance.High) &&
+                            ((qMode == QMode.Combo && MenuParamBool("smiteCombo")) ||
+                             (qMode == QMode.Insec && MenuParamBool("smiteInsec")) ||
+                             (qMode == QMode.Harass && MenuParamBool("smiteHarass"))));
             if (useSmite)
             {
                 LeeMethods.Player.SummonerSpellbook.CastSpell(LeeSinSharp.SmiteSlot, qPrediction.CollisionObjects[0]);

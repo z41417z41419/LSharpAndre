@@ -93,10 +93,6 @@ namespace Leesin
 
         public static void Combo(Obj_AI_Hero targetHero) //Thanks Roach_ For helping me with combo
         {
-            if (!targetHero.IsValidTarget())
-            {
-                return;
-            }
             var enemyQBuffed = targetHero.HasBuff("BlindMonkQOne", true);
             var autoAttacks = Config.Menu.Item("aaBetween").GetValue<Slider>().Value;
             var passiveCount = LeeUtility.BuffCount("BlindMonkIronWill");
@@ -125,7 +121,7 @@ namespace Leesin
             {
                 if (LeeUtility.CastQ(targetHero, QMode.Combo))
                 {
-                    Utility.DelayAction.Add((int)(targetHero.Distance(Player) / Q.Speed), () => Q.Cast());
+                    Utility.DelayAction.Add((int) (targetHero.Distance(Player) / Q.Speed), () => Q.Cast());
                 }
                 if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <= 350 * 350 &&
                     E.IsReady())
@@ -149,13 +145,13 @@ namespace Leesin
 
         public static void InsecCombo(Obj_AI_Hero targetHero)
         {
-            if (!(W.IsReady() && Items.GetWardSlot() != null) ||
-                !R.IsReady() || !Q.IsReady() ||
+            if (!(W.IsReady() && Items.GetWardSlot() != null) || !R.IsReady() || !Q.IsReady() ||
                 Q.Instance.Name != "BlindMonkQOne")
             {
-                if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active || Config.Menu.Item("insec2").GetValue<KeyBind>().Active)
+                if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active ||
+                    Config.Menu.Item("insec2").GetValue<KeyBind>().Active)
                 {
-                    Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);                    
+                    Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
                 }
                 return;
             }
@@ -176,9 +172,10 @@ namespace Leesin
                         Utility.DelayAction.Add(
                             delay * 2, () =>
                             {
-                                if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <= 375 * 375)
+                                if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <=
+                                    375 * 375)
                                 {
-                                    R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast"));                                    
+                                    R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast"));
                                 }
                             });
                         Utility.DelayAction.Add(
@@ -195,7 +192,6 @@ namespace Leesin
                             delay * 2 + 250, () => R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast")));
                     }
                 }
-          
             }
             else if (Config.Menu.Item("insec2").GetValue<KeyBind>().Active)
             {
