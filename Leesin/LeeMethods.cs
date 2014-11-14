@@ -179,7 +179,7 @@ namespace Leesin
                     if (useFlash)
                     {
                         Utility.DelayAction.Add(
-                            (int) (delay * 1.5), () =>
+                            (int) (delay * 1.2), () =>
                             {
                                 if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <=
                                     375 * 375)
@@ -188,7 +188,7 @@ namespace Leesin
                                 }
                             });
                         Utility.DelayAction.Add(
-                            (int) (delay * 1.5 + 200 - Game.Ping),
+                            (int) (delay * 1.2 + 200 - Game.Ping),
                             () =>
                                 Player.SummonerSpellbook.CastSpell(
                                     LeeSinSharp.FlashSlot, LeeUtility.GetInsecVector3(targetHero, true, pos)));
