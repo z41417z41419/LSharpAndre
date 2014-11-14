@@ -34,8 +34,6 @@ namespace Leesin
                     break;
                 case HarassStage.Started:
                     harassStage = HarassStage.Doing;
-                    break;
-                case HarassStage.Doing:
                     if (E.IsReady() &&
                         Vector3.DistanceSquared(Player.ServerPosition, targetHero.ServerPosition) <= 350 * 350 &&
                         LeeUtility.MenuParamBool("UseE1H"))
@@ -43,9 +41,15 @@ namespace Leesin
                         E.Cast();
                         if (LeeUtility.MenuParamBool("UseE2H"))
                         {
-                            Utility.DelayAction.Add(250 - Game.Ping / 2 + 10, () => E.Cast(Player, true));
+                            Utility.DelayAction.Add(
+                                250 - Game.Ping / 2 + 10, () =>
+                                {
+                                    E.Cast(Player, true);
+                                    harassStage = LeeUtility.MenuParamBool("UseQ1H") && Q.IsReady()
+                                        ? HarassStage.Doing
+                                        : HarassStage.Finished;
+                                });
                         }
-                        harassStage = (HarassStage.Finished);
                     }
                     else
                     {
@@ -53,18 +57,17 @@ namespace Leesin
                     }
                     if (Q.IsReady() && LeeUtility.MenuParamBool("UseQ1H"))
                     {
-                        LeeUtility.CastQ(targetHero, QMode.Harass);
-                        if (LeeUtility.MenuParamBool("UseQ2H") && Q.IsReady())
+                        //LeeUtility.CastQ(targetHero, QMode.Harass);
+                        if (LeeUtility.CastQ(targetHero, QMode.Harass) && LeeUtility.MenuParamBool("UseQ2H"))
                         {
+                            var delay = (int) (targetHero.Distance(Player) / Q.Speed);
                             Utility.DelayAction.Add(
-                                250 + (int) (targetHero.Distance(Player) / Q.Speed) - Game.Ping / 2 + 10, () =>
+                                delay, () =>
                                 {
                                     Q.Cast();
                                     _harassInitialVector3 = Player.ServerPosition;
                                 });
-                            Utility.DelayAction.Add(
-                                (int) (Math.Ceiling(targetHero.Distance(Player)) / Q.Speed - (Game.Ping / 2) + 10),
-                                () => harassStage = HarassStage.Finished);
+                            Utility.DelayAction.Add(delay * 2, () => harassStage = HarassStage.Finished);
                         }
                         else
                         {
@@ -75,6 +78,8 @@ namespace Leesin
                     {
                         harassStage = HarassStage.Finished;
                     }
+                    break;
+                case HarassStage.Doing:
                     break;
                 case HarassStage.Finished:
                     if (LeeUtility.MenuParamBool("UseWH") && useW)
@@ -118,6 +123,10 @@ namespace Leesin
             }
             else
             {
+                if (LeeUtility.CastQ(targetHero, QMode.Combo))
+                {
+                    Utility.DelayAction.Add((int)(targetHero.Distance(Player) / Q.Speed), () => Q.Cast());
+                }
                 if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <= 350 * 350 &&
                     E.IsReady())
                 {
@@ -141,15 +150,15 @@ namespace Leesin
         public static void InsecCombo(Obj_AI_Hero targetHero)
         {
             if (!(W.IsReady() && Items.GetWardSlot() != null) ||
-                Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.SmiteSlot) != SpellState.Ready || !Q.IsReady() ||
+                !R.IsReady() || !Q.IsReady() ||
                 Q.Instance.Name != "BlindMonkQOne")
             {
                 return;
             }
             var useFlash = (LeeUtility.MenuParamBool("useFlashInsec") &&
-                             ((Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 0 && W.IsReady()) ||
-                              (Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 1 &&
-                               Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.SmiteSlot) == SpellState.Ready)));
+                            ((Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 0 && W.IsReady()) ||
+                             (Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 1 &&
+                              Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.SmiteSlot) == SpellState.Ready)));
             var pos = Player.ServerPosition.To2D();
 
             if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active)

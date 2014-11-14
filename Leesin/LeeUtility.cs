@@ -111,6 +111,10 @@ namespace Leesin
 
         public static bool CastQ(Obj_AI_Hero target, QMode qMode)
         {
+            if (!LeeMethods.Q.IsReady() || LeeMethods.Q.Instance.Name != "BlindMonkQOne")
+            {
+                return false;
+            }
             var casted = false;
             var qPrediction = LeeMethods.Q.GetPrediction(target);
             var useSmite = LeeSinSharp.SmiteSlot != SpellSlot.Unknown &&
