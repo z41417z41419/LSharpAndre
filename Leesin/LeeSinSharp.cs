@@ -52,6 +52,22 @@ namespace Leesin
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
+            if (false && Config.Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            {
+                                Obj_AI_Hero target = SimpleTs.GetTarget(
+                    LeeMethods.Q.IsReady() ? LeeMethods.Q.Range : LeeMethods.R.Range, SimpleTs.DamageType.Physical);
+                if (!target.IsValidTarget())
+                {
+                    return;
+                }
+                LeeUtility.CastQ(target, QMode.Combo);
+                Console.WriteLine(target.Distance(LeeMethods.Player)/LeeMethods.Q.Speed * 1000 +300);
+                Utility.DelayAction.Add((int)(target.Distance(LeeMethods.Player) / LeeMethods.Q.Speed * 1000)+300, () =>
+                {
+                    LeeMethods.Q.Cast(target); Console.WriteLine("Casted");
+                });
+            }
+            //return;
             try
             {
                 if (Config.Menu.Item("wardJump").GetValue<KeyBind>().Active)

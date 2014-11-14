@@ -60,11 +60,11 @@ namespace Leesin
                         //LeeUtility.CastQ(targetHero, QMode.Harass);
                         if (LeeUtility.CastQ(targetHero, QMode.Harass) && LeeUtility.MenuParamBool("UseQ2H"))
                         {
-                            var delay = (int) (targetHero.Distance(Player) / Q.Speed);
+                            var delay = (int) (targetHero.Distance(Player) / Q.Speed * 1000) + 300 + Game.Ping;
                             Utility.DelayAction.Add(
                                 delay, () =>
                                 {
-                                    Q.Cast();
+                                    Q.Cast(targetHero);
                                     _harassInitialVector3 = Player.ServerPosition;
                                 });
                             Utility.DelayAction.Add(delay * 2, () => _harassStage = HarassStage.Finished);
@@ -93,6 +93,10 @@ namespace Leesin
 
         public static void Combo(Obj_AI_Hero targetHero) //Thanks Roach_ For helping me with combo
         {
+            if (!targetHero.IsValidTarget())
+            {
+                return;
+            }
             var enemyQBuffed = targetHero.HasBuff("BlindMonkQOne", true);
             var autoAttacks = Config.Menu.Item("aaBetween").GetValue<Slider>().Value;
             var passiveCount = LeeUtility.BuffCount("BlindMonkIronWill");
@@ -110,7 +114,7 @@ namespace Leesin
                 if (targetHero.Distance(Player) <= R.Range)
                 {
                     R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast"));
-                    Utility.DelayAction.Add(500 - Game.Ping / 2, () => Q.Cast(targetHero, true));
+                    Utility.DelayAction.Add(750, () => Q.Cast(targetHero));
                 }
                 else
                 {
@@ -119,9 +123,9 @@ namespace Leesin
             }
             else
             {
-                if (LeeUtility.CastQ(targetHero, QMode.Combo))
+                if (LeeUtility.MenuParamBool("useQC") && LeeUtility.CastQ(targetHero, QMode.Combo))
                 {
-                    Utility.DelayAction.Add((int) (targetHero.Distance(Player) / Q.Speed), () => Q.Cast());
+                    Utility.DelayAction.Add((int)(targetHero.Distance(Player) / Q.Speed * 1000) + 300 + Game.Ping, () => Q.Cast());
                 }
                 if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <= 350 * 350 &&
                     E.IsReady())
@@ -145,32 +149,37 @@ namespace Leesin
 
         public static void InsecCombo(Obj_AI_Hero targetHero)
         {
-            if (!(W.IsReady() && Items.GetWardSlot() != null) || !R.IsReady() || !Q.IsReady() ||
+            if ((!W.IsReady() && Items.GetWardSlot() != null) || !R.IsReady() || !Q.IsReady() ||
                 Q.Instance.Name != "BlindMonkQOne")
             {
                 if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active ||
                     Config.Menu.Item("insec2").GetValue<KeyBind>().Active)
                 {
                     Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+                    Console.WriteLine("retu1rned");
+
                 }
                 return;
             }
+            Console.WriteLine("not returned");
+
             var useFlash = (LeeUtility.MenuParamBool("useFlashInsec") &&
                             ((Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 0 && W.IsReady()) ||
                              (Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 1 &&
                               Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.SmiteSlot) == SpellState.Ready)));
+            Console.WriteLine(useFlash);
             var pos = Player.ServerPosition.To2D();
 
             if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active)
             {
                 if (LeeUtility.CastQ(targetHero, QMode.Insec))
                 {
-                    var delay = (int) (Player.Distance(targetHero) / Q.Speed);
+                    var delay = (int)(Player.Distance(targetHero) / Q.Speed * 1000) + 300 + Game.Ping;
                     Utility.DelayAction.Add(delay, () => Q.Cast());
                     if (useFlash)
                     {
                         Utility.DelayAction.Add(
-                            delay * 2, () =>
+                            (int) (delay * 1.5), () =>
                             {
                                 if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <=
                                     375 * 375)
@@ -179,7 +188,7 @@ namespace Leesin
                                 }
                             });
                         Utility.DelayAction.Add(
-                            delay * 2 + 200 - Game.Ping,
+                            (int) (delay * 1.5 + 200 - Game.Ping),
                             () =>
                                 Player.SummonerSpellbook.CastSpell(
                                     LeeSinSharp.FlashSlot, LeeUtility.GetInsecVector3(targetHero, true, pos)));
@@ -204,9 +213,9 @@ namespace Leesin
                     {
                         R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast"));
                         Utility.DelayAction.Add(
-                            200 - Game.Ping, () => Player.SummonerSpellbook.CastSpell(LeeSinSharp.FlashSlot, insecPos));
+                            150 - Game.Ping, () => Player.SummonerSpellbook.CastSpell(LeeSinSharp.FlashSlot, insecPos));
                         Utility.DelayAction.Add(500, () => Q.Cast(targetHero));
-                        Utility.DelayAction.Add(1000, () => Q.Cast());
+                        Utility.DelayAction.Add(1000, () => Q.Cast(targetHero));
                     }
                     else
                     {
@@ -220,7 +229,7 @@ namespace Leesin
                         LeeUtility.WardJump(insecPos);
                         Utility.DelayAction.Add(250, () => R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast")));
                         Utility.DelayAction.Add(500, () => Q.Cast(targetHero));
-                        Utility.DelayAction.Add(1000, () => Q.Cast());
+                        Utility.DelayAction.Add(1250, () => Q.Cast());
                     }
                     else
                     {
@@ -232,7 +241,7 @@ namespace Leesin
 
         public static void KSer()
         {
-            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsEnemy).OrderBy(h => h.Health))
+            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsEnemy && h.Distance(Player) < (Q.IsReady() ? Q.Range : R.Range) && h.IsValidTarget()).OrderBy(h => h.Health))
             {
                 if (LeeUtility.MenuParamBool("useQ1KS"))
                 {
@@ -247,12 +256,12 @@ namespace Leesin
                     {
                         Q.Cast(hero);
                         Utility.DelayAction.Add(
-                            (int) (Math.Ceiling(Player.Distance(hero) / Q.Speed) + 250), () => Q.Cast(Player, true));
+                            (int)(Math.Ceiling(Player.Distance(hero) / Q.Speed * 1000) + 300 + Game.Ping), () => Q.Cast(Player));
                     }
                 }
                 if (E.IsReady() && LeeUtility.MenuParamBool("useE1KS") &&
                     Vector3.DistanceSquared(Player.ServerPosition, hero.ServerPosition) <= 350 * 350 &&
-                    W.GetHealthPrediction(hero) <= W.GetDamage(hero))
+                    E.GetHealthPrediction(hero) <= W.GetDamage(hero))
                 {
                     E.Cast();
                 }
@@ -269,7 +278,7 @@ namespace Leesin
                     var hero1 = hero;
                     var startPos = Player.ServerPosition.To2D();
                     var endPos = Player.ServerPosition.To2D().Extend(hero1.ServerPosition.To2D(), 1200);
-                    var polygon = new Polygon(LeeUtility.Rectangle(startPos, endPos, hero1.BoundingRadius));
+                    /*var polygon = new Polygon(LeeUtility.Rectangle(startPos, endPos, hero1.BoundingRadius));
                     foreach (var victim in
                         ObjectManager.Get<Obj_AI_Hero>()
                             .Where(
@@ -282,7 +291,7 @@ namespace Leesin
                         {
                             R.Cast(hero1);
                         }
-                    }
+                    }*/
                 }
             }
         }
@@ -358,7 +367,7 @@ namespace Leesin
                     Utility.DelayAction.Add(250, () => Q.Cast());
                     var minion = jungleMinion;
                     Utility.DelayAction.Add(
-                        (int) ((Player.Distance(jungleMinion) - 725) / Q.Speed), () =>
+                        (int)((Player.Distance(jungleMinion) - 725) / Q.Speed * 1000) + 300 + Game.Ping, () =>
                         {
                             Player.GetSummonerSpellDamage(minion, Damage.SummonerSpell.Smite);
                             LeeUtility.WardJump(backPos);
