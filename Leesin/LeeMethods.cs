@@ -100,7 +100,7 @@ namespace Leesin
             }
             var enemyQBuffed = targetHero.HasBuff("BlindMonkQOne", true);
             var autoAttacks = Config.Menu.Item("aaBetween").GetValue<Slider>().Value;
-            var passiveCount = LeeUtility.BuffCount("BlindMonkIronWill");
+            var passiveCount = LeeUtility.BuffCount("blindmonkpassive_cosmetic");
             if (!enemyQBuffed && autoAttacks != 0 && passiveCount >= Math.Abs(autoAttacks - 2))
             {
                 return;
@@ -311,10 +311,11 @@ namespace Leesin
 
         public static void LaneClear()
         {
-            if (Player.HasBuff("BlindMonkIronWill") || waitForSpell >= Environment.TickCount)
+            if (Player.HasBuff("blindmonkpassive_cosmetic", true) || waitForSpell >= Environment.TickCount)
             {
                 return;
             }
+
             var minions = MinionManager.GetMinions(Player.ServerPosition, E.Range);
             var jungleMinions = MinionManager.GetMinions(
                 Player.ServerPosition, Q.Range, MinionTypes.All, MinionTeam.Neutral);
@@ -326,19 +327,20 @@ namespace Leesin
                 if (LeeUtility.MenuParamBool("UseEW") && E.IsReady() &&
                     Vector3.DistanceSquared(minion.ServerPosition, Player.ServerPosition) <= 350 * 350)
                 {
+                    Console.WriteLine("E");
                     E.Cast();
-                    waitForSpell = Environment.TickCount + Game.Ping;
+                    waitForSpell = Environment.TickCount + 250 + Game.Ping;
                 }
                 else if (LeeUtility.MenuParamBool("UseQW") && Q.IsReady() &&
                          Q.GetHealthPrediction(minion) <= Q.GetDamage(minion))
                 {
                     Q.Cast(minion);
-                    waitForSpell = Environment.TickCount + Game.Ping;
+                    waitForSpell = Environment.TickCount + 250 + Game.Ping;
                 }
                 else if (LeeUtility.MenuParamBool("UseWW") && W.IsReady())
                 {
                     W.Cast();
-                    waitForSpell = Environment.TickCount + Game.Ping;
+                    waitForSpell = Environment.TickCount + 250 + Game.Ping;
                 }
             }
         }
