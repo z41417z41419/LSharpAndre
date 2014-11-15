@@ -19,6 +19,7 @@ namespace Leesin
         private static HarassStage _harassStage = HarassStage.Nothing;
         public static readonly string[] JungleCamps = { "Worm", "Dragon", "LizardElder", "AncientGolem" };
         public static readonly string[] SmallMinionCamps = { "Wraith", "Golem", "GreatWraith", "GiantWolf" };
+        private static int waitForSpell;
 
         public static void Harass(Obj_AI_Hero targetHero, bool useW = true)
         {
@@ -125,7 +126,8 @@ namespace Leesin
             {
                 if (LeeUtility.MenuParamBool("useQC") && LeeUtility.CastQ(targetHero, QMode.Combo))
                 {
-                    Utility.DelayAction.Add((int)(targetHero.Distance(Player) / Q.Speed * 1000) + 300 + Game.Ping, () => Q.Cast());
+                    Utility.DelayAction.Add(
+                        (int) (targetHero.Distance(Player) / Q.Speed * 1000) + 300 + Game.Ping, () => Q.Cast());
                 }
                 if (Vector3.DistanceSquared(targetHero.ServerPosition, Player.ServerPosition) <= 350 * 350 &&
                     E.IsReady())
@@ -136,45 +138,40 @@ namespace Leesin
                         E.Cast();
                     }
                 }
-                else
+                else if (!Q.IsReady() && !E.IsReady() && !R.IsReady() && LeeUtility.MenuParamBool("useW1C") &&
+                         (W.Instance.Name == "BlindMonkWOne" || LeeUtility.MenuParamBool("useW2C")))
                 {
-                    if (LeeUtility.MenuParamBool("useW1C") &&
-                        (W.Instance.Name == "BlindMonkWOne" || LeeUtility.MenuParamBool("useW2C")))
-                    {
-                        W.Cast();
-                    }
+                    W.Cast();
                 }
             }
         }
 
         public static void InsecCombo(Obj_AI_Hero targetHero)
         {
-            if ((!W.IsReady() && Items.GetWardSlot() != null) || !R.IsReady() || !Q.IsReady() ||
-                Q.Instance.Name != "BlindMonkQOne")
+            if ((!W.IsReady() && Items.GetWardSlot() != null &&
+                 Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.FlashSlot) != SpellState.Ready) || !R.IsReady() ||
+                !Q.IsReady() || Q.Instance.Name != "BlindMonkQOne")
             {
                 if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active ||
                     Config.Menu.Item("insec2").GetValue<KeyBind>().Active)
                 {
                     Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
-                    Console.WriteLine("retu1rned");
-
                 }
                 return;
             }
-            Console.WriteLine("not returned");
 
             var useFlash = (LeeUtility.MenuParamBool("useFlashInsec") &&
-                            ((Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 0 && W.IsReady()) ||
+                            ((Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 0 && !W.IsReady()) ||
                              (Config.Menu.Item("insecMode").GetValue<StringList>().SelectedIndex == 1 &&
-                              Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.SmiteSlot) == SpellState.Ready)));
-            Console.WriteLine(useFlash);
+                              Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.FlashSlot) == SpellState.Ready)));
+            //useFlash = false;
             var pos = Player.ServerPosition.To2D();
 
             if (Config.Menu.Item("insec1").GetValue<KeyBind>().Active)
             {
                 if (LeeUtility.CastQ(targetHero, QMode.Insec))
                 {
-                    var delay = (int)(Player.Distance(targetHero) / Q.Speed * 1000) + 300 + Game.Ping;
+                    var delay = (int) (Player.Distance(targetHero) / Q.Speed * 1000) + 300 + Game.Ping;
                     Utility.DelayAction.Add(delay, () => Q.Cast());
                     if (useFlash)
                     {
@@ -185,20 +182,31 @@ namespace Leesin
                                     375 * 375)
                                 {
                                     R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast"));
+                                    Utility.DelayAction.Add(
+                                        200 - Game.Ping,
+                                        () =>
+                                            Player.SummonerSpellbook.CastSpell(
+                                                LeeSinSharp.FlashSlot, LeeUtility.GetInsecVector3(targetHero, true, pos)));
                                 }
                             });
-                        Utility.DelayAction.Add(
-                            (int) (delay * 1.2 + 200 - Game.Ping),
-                            () =>
-                                Player.SummonerSpellbook.CastSpell(
-                                    LeeSinSharp.FlashSlot, LeeUtility.GetInsecVector3(targetHero, true, pos)));
                     }
                     else
                     {
+                        var wardJumpPos = LeeUtility.GetInsecVector3(targetHero, true, pos);
+                        Console.WriteLine((int) (delay * 1.1));
+                        Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(wardJumpPos.X, wardJumpPos.Y)).Process();
                         Utility.DelayAction.Add(
-                            delay * 2, () => LeeUtility.WardJump(LeeUtility.GetInsecVector3(targetHero, true, pos)));
-                        Utility.DelayAction.Add(
-                            delay * 2 + 250, () => R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast")));
+                            (int) (delay * 1.1), () =>
+                            {
+                                if (Vector3.DistanceSquared(wardJumpPos, Player.ServerPosition) <= 600 * 600)
+                                {
+                                    LeeUtility.WardJump(wardJumpPos);
+                                    Utility.DelayAction.Add(250 + Game.Ping, () => LeeUtility.WardJump(wardJumpPos));
+                                    Utility.DelayAction.Add(
+                                        500 + Game.Ping,
+                                        () => R.Cast(targetHero, LeeUtility.MenuParamBool("packetCast")));
+                                }
+                            });
                     }
                 }
             }
@@ -241,7 +249,11 @@ namespace Leesin
 
         public static void KSer()
         {
-            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsEnemy && h.Distance(Player) < (Q.IsReady() ? Q.Range : R.Range) && h.IsValidTarget()).OrderBy(h => h.Health))
+            foreach (var hero in
+                ObjectManager.Get<Obj_AI_Hero>()
+                    .Where(
+                        h => h.IsEnemy && h.Distance(Player) < (Q.IsReady() ? Q.Range : R.Range) && h.IsValidTarget())
+                    .OrderBy(h => h.Health))
             {
                 if (LeeUtility.MenuParamBool("useQ1KS"))
                 {
@@ -256,7 +268,8 @@ namespace Leesin
                     {
                         Q.Cast(hero);
                         Utility.DelayAction.Add(
-                            (int)(Math.Ceiling(Player.Distance(hero) / Q.Speed * 1000) + 300 + Game.Ping), () => Q.Cast(Player));
+                            (int) (Math.Ceiling(Player.Distance(hero) / Q.Speed * 1000) + 300 + Game.Ping),
+                            () => Q.Cast(Player));
                     }
                 }
                 if (E.IsReady() && LeeUtility.MenuParamBool("useE1KS") &&
@@ -298,7 +311,7 @@ namespace Leesin
 
         public static void LaneClear()
         {
-            if (Player.HasBuff("BlindMonkIronWill"))
+            if (Player.HasBuff("BlindMonkIronWill") || waitForSpell >= Environment.TickCount)
             {
                 return;
             }
@@ -306,17 +319,26 @@ namespace Leesin
             var jungleMinions = MinionManager.GetMinions(
                 Player.ServerPosition, Q.Range, MinionTypes.All, MinionTeam.Neutral);
             minions.AddRange(jungleMinions);
-            minions.RemoveAll(m => m.Name.ToLower().IndexOf("ward", StringComparison.InvariantCultureIgnoreCase) >= 0);
+            minions.RemoveAll(m => m.Name.IndexOf("ward", StringComparison.InvariantCultureIgnoreCase) >= 0);
             //Doesn't create a new substring Kappa
             foreach (var minion in minions.OrderByDescending(m => m.MaxHealth).ThenBy(m => m.Health))
             {
-                if (Q.GetHealthPrediction(minion) <= Q.GetDamage(minion))
-                {
-                    Q.Cast(minion);
-                }
-                if (E.IsReady() && Vector3.DistanceSquared(minion.ServerPosition, Player.ServerPosition) <= 350 * 350)
+                if (LeeUtility.MenuParamBool("UseEW") && E.IsReady() &&
+                    Vector3.DistanceSquared(minion.ServerPosition, Player.ServerPosition) <= 350 * 350)
                 {
                     E.Cast();
+                    waitForSpell = Environment.TickCount + Game.Ping;
+                }
+                else if (LeeUtility.MenuParamBool("UseQW") && Q.IsReady() &&
+                         Q.GetHealthPrediction(minion) <= Q.GetDamage(minion))
+                {
+                    Q.Cast(minion);
+                    waitForSpell = Environment.TickCount + Game.Ping;
+                }
+                else if (LeeUtility.MenuParamBool("UseWW") && W.IsReady())
+                {
+                    W.Cast();
+                    waitForSpell = Environment.TickCount + Game.Ping;
                 }
             }
         }
@@ -330,8 +352,8 @@ namespace Leesin
                 foreach (var jungleMinion in
                     jungleMinions.Where(
                         jungleMinion =>
-                            JungleCamps.Any(j => j == jungleMinion.Name) ||
-                            SmallMinionCamps.Any(j => j == jungleMinion.Name))
+                            JungleCamps.Any(j => jungleMinion.Name.StartsWith(j)) ||
+                            SmallMinionCamps.Any(j => jungleMinion.Name.StartsWith(j)))
                         .Where(
                             jungleMinion =>
                                 LeeUtility.MenuParamBool(jungleMinion.Name) &&
@@ -358,8 +380,8 @@ namespace Leesin
                             Player.GetSummonerSpellDamage(minion, Damage.SummonerSpell.Smite))
                         .Where(
                             jungleMinion =>
-                                JungleCamps.Any(j => j == jungleMinion.Name) ||
-                                SmallMinionCamps.Any(j => j == jungleMinion.Name))
+                                JungleCamps.Any(j => jungleMinion.Name.StartsWith(j)) ||
+                                SmallMinionCamps.Any(j => jungleMinion.Name.StartsWith(j)))
                         .Where(jungleMinion => LeeUtility.MenuParamBool(jungleMinion.Name)))
                 {
                     Q.Cast(jungleMinion);
@@ -367,7 +389,7 @@ namespace Leesin
                     Utility.DelayAction.Add(250, () => Q.Cast());
                     var minion = jungleMinion;
                     Utility.DelayAction.Add(
-                        (int)((Player.Distance(jungleMinion) - 725) / Q.Speed * 1000) + 300 + Game.Ping, () =>
+                        (int) ((Player.Distance(jungleMinion) - 725) / Q.Speed * 1000) + 300 + Game.Ping, () =>
                         {
                             Player.GetSummonerSpellDamage(minion, Damage.SummonerSpell.Smite);
                             LeeUtility.WardJump(backPos);

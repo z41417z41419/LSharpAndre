@@ -81,7 +81,7 @@ namespace Leesin
             //Laneclear Menu
             //
             Menu.AddSubMenu(new Menu("Lane Clear", "LaneClear"));
-            Menu.SubMenu("LaneClear").AddItem(new MenuItem("infoText3", "Lane/Jungle clear Key: \"" + (char)(Menu.Item("LaneClear").GetValue<KeyBind>().Key) + "\"(Mixed Mode)")); //Done
+            Menu.SubMenu("LaneClear").AddItem(new MenuItem("infoText3", "Lane/Jungle clear Key: \"" + (char)(Menu.Item("LaneClear").GetValue<KeyBind>().Key) + "\"(LaneClear Mode)")); //Done
             Menu.SubMenu("LaneClear").AddItem(new MenuItem("UseQW", "Use Q").SetValue(true));  //Done 
             Menu.SubMenu("LaneClear").AddItem(new MenuItem("UseWW", "Use W").SetValue(false));  
             Menu.SubMenu("LaneClear").AddItem(new MenuItem("UseEW", "Use E").SetValue(true));  //Done 

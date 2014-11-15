@@ -9,9 +9,8 @@ namespace Leesin
 {
     internal static class LeeUtility
     {
-        private static bool _waittingForWard;
-        private static float _wardCasted;
-
+        public static int WaittingForWard;
+        public static Vector3 WardCastPosition;
         public static void SendMessage(string msg)
         {
             Game.PrintChat("<font color=\"#00BFFF\">LeeSin# -</font> <font color=\"#FFFFFF\">" + msg + "</font>");
@@ -64,11 +63,11 @@ namespace Leesin
 
         public static void WardJump(Vector3 pos, bool useWard = true)
         {
-            if (!LeeMethods.W.IsReady() || LeeMethods.W.Instance.Name == "blindmonkwtwo")
+            if (!LeeMethods.W.IsReady() || LeeMethods.W.Instance.Name == "blindmonkwtwo" || WaittingForWard > Environment.TickCount)
             {
                 return;
             }
-            pos = NavMesh.GetCollisionFlags(pos).HasFlag(CollisionFlags.Wall)
+            WardCastPosition = NavMesh.GetCollisionFlags(pos).HasFlag(CollisionFlags.Wall)
                 ? LeeMethods.Player.GetPath(pos).Last()
                 : pos;
             var jumpObject =
@@ -79,11 +78,11 @@ namespace Leesin
                             obj.IsAlly && !obj.IsMe &&
                             (!(obj.Name.IndexOf("turret", StringComparison.InvariantCultureIgnoreCase) >= 0) &&
                              //Doesn't create a new substring KappaQ
-                             Vector3.DistanceSquared(pos, obj.ServerPosition) <= 100 * 100));
+                             Vector3.DistanceSquared(pos, obj.ServerPosition) <= 150 * 150));
             if (jumpObject != null)
             {
                 LeeMethods.W.CastOnUnit(jumpObject);
-                _waittingForWard = false;
+                WaittingForWard = Environment.TickCount;
                 return;
             }
             if (!useWard)
@@ -91,17 +90,12 @@ namespace Leesin
                 return;
             }
             var ward = Items.GetWardSlot();
-            if (ward == null || ward.Stacks == 0 || _waittingForWard)
+            if (ward == null || ward.Stacks == 0)
             {
-                if (Game.Time - _wardCasted > 0.25)
-                {
-                    _waittingForWard = false;
-                }
                 return;
             }
-            ward.UseItem(Game.CursorPos);
-            _wardCasted = Game.Time;
-            _waittingForWard = true;
+            ward.UseItem(WardCastPosition);
+            WaittingForWard = Environment.TickCount + 250 + Game.Ping;
         }
 
         public static bool MenuParamBool(string menuName)

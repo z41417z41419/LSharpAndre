@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
@@ -32,8 +33,23 @@ namespace Leesin
                 Obj_AI_Base.OnProcessSpellCast += OnProcessSpellCast;
             }
             Game.OnGameUpdate += Game_OnGameUpdate;
+            GameObject.OnCreate += GameObject_OnCreate;
             Drawing.OnDraw += OnDraw;
             LeeUtility.SendMessage("Loaded");
+        }
+
+        private void GameObject_OnCreate(GameObject sender, EventArgs args)
+        {
+            //Console.WriteLine("called1");
+            if (LeeUtility.WaittingForWard <= Environment.TickCount || !(sender is Obj_AI_Base) || sender.IsEnemy)
+            {
+                return;
+            }
+            var wardObject = (Obj_AI_Base)sender;
+            if (wardObject.Name.IndexOf("ward", StringComparison.InvariantCultureIgnoreCase) >= 0 && Vector3.DistanceSquared(sender.Position, LeeUtility.WardCastPosition) <= 150*150)
+            {
+                LeeMethods.W.Cast(wardObject);
+            }
         }
 
         private void OnDraw(EventArgs args)
@@ -54,20 +70,18 @@ namespace Leesin
         {
             if (false && Config.Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
             {
-                                Obj_AI_Hero target = SimpleTs.GetTarget(
-                    LeeMethods.Q.IsReady() ? LeeMethods.Q.Range : LeeMethods.R.Range, SimpleTs.DamageType.Physical);
-                if (!target.IsValidTarget())
+                            var jungleMinions = MinionManager.GetMinions(
+                LeeMethods.Player.ServerPosition, LeeMethods.Q.Range, MinionTypes.All, MinionTeam.Neutral);
+                            foreach (var jungleMinion in jungleMinions.Where(
+                                    jungleMinion =>
+                                       LeeMethods.JungleCamps.Any(j => jungleMinion.Name.StartsWith(j)) ||
+                                        LeeMethods.SmallMinionCamps.Any(j => jungleMinion.Name.StartsWith(j))))
                 {
-                    return;
+                    Console.WriteLine(jungleMinion.Name);
+                    Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(jungleMinion.ServerPosition.X,jungleMinion.ServerPosition.Y)).Process();
+                                //LeeMethods.Player.SummonerSpellbook.CastSpell(LeeSinSharp.SmiteSlot, jungleMinion);
                 }
-                LeeUtility.CastQ(target, QMode.Combo);
-                Console.WriteLine(target.Distance(LeeMethods.Player)/LeeMethods.Q.Speed * 1000 +300);
-                Utility.DelayAction.Add((int)(target.Distance(LeeMethods.Player) / LeeMethods.Q.Speed * 1000)+300, () =>
-                {
-                    LeeMethods.Q.Cast(target); Console.WriteLine("Casted");
-                });
             }
-            //return;
             try
             {
                 if (Config.Menu.Item("wardJump").GetValue<KeyBind>().Active)
