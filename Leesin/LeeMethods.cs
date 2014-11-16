@@ -148,7 +148,7 @@ namespace Leesin
 
         public static void InsecCombo(Obj_AI_Hero targetHero)
         {
-            if ((!W.IsReady() && Items.GetWardSlot() != null &&
+            if ((!W.IsReady() && Items.GetWardSlot() == null &&
                  Player.SummonerSpellbook.CanUseSpell(LeeSinSharp.FlashSlot) != SpellState.Ready) || !R.IsReady() ||
                 !Q.IsReady() || Q.Instance.Name != "BlindMonkQOne")
             {
