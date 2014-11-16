@@ -13,10 +13,11 @@ namespace Leesin
         public static Menu Menu;
         public static Orbwalking.Orbwalker Orbwalker;
         public static bool StealthChampiopns;
-        public static List<Spell> SpellList = new List<Spell>();
+        public static readonly List<Spell> SpellList = new List<Spell>();
         public Config()
         {
-            StealthChampiopns = ObjectManager.Get<Obj_AI_Hero>().Any(hero => hero.IsEnemy && (hero.ChampionName == "Akali" || hero.ChampionName == "Wukong"));
+            StealthChampiopns = ObjectManager.Get<Obj_AI_Hero>().Any(hero => hero.IsEnemy && (hero.ChampionName == "Akali" || hero.ChampionName == "MonkeyKing"));
+
             Menu = new Menu("Lee Sin#", "LeeSinSharp", true);
             //Target Selector
             var targetSelector = new Menu("Target Selector", "TargetSelector");
@@ -95,7 +96,7 @@ namespace Leesin
             Menu.SubMenu("KillSteal").AddItem(new MenuItem("useE1KS", "Use E1").SetValue(true)); //Done
             Menu.SubMenu("KillSteal").AddItem(new MenuItem("useRKS", "Use R").SetValue(true)); //Done
             Menu.SubMenu("KillSteal").AddItem(new MenuItem("rOverKill", "% R overkill").SetValue(new Slider(50))); //Done
-            Menu.SubMenu("KillSteal").AddItem(new MenuItem("useRCollisionKS", "Use R to kill knockable").SetValue(true)); //Partial Done
+            Menu.SubMenu("KillSteal").AddItem(new MenuItem("useRCollisionKS", "Use R to kill knockable(Bugged)").SetValue(true)); //Partial Done
             //
             //Jungle Menu
             //
@@ -133,6 +134,7 @@ namespace Leesin
             {
                 Menu.SubMenu("Misc").AddItem(new MenuItem("autoEEStealth", "Auto reaveal stealth champions(EE).").SetValue(true));     //Done           
             }
+            Console.WriteLine(StealthChampiopns);
             Menu.SubMenu("Misc").AddItem(new MenuItem("wardJump", "Ward Jump").SetValue(new KeyBind("A".ToCharArray()[0], KeyBindType.Press))); //Done
             Menu.SubMenu("Misc").AddItem(new MenuItem("packetCast", "Packet Cast").SetValue(false));                //Done
             //Add to main menu

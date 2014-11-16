@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -11,6 +12,7 @@ namespace Leesin
     {
         public static int WaittingForWard;
         public static Vector3 WardCastPosition;
+
         public static void SendMessage(string msg)
         {
             Game.PrintChat("<font color=\"#00BFFF\">LeeSin# -</font> <font color=\"#FFFFFF\">" + msg + "</font>");
@@ -61,9 +63,10 @@ namespace Leesin
             return insecPosition;
         }
 
-        public static void WardJump(Vector3 pos, bool useWard = true)
+        public static void WardJump(Vector3 pos, bool useWard = true, bool checkObjects = true)
         {
-            if (!LeeMethods.W.IsReady() || LeeMethods.W.Instance.Name == "blindmonkwtwo" || WaittingForWard > Environment.TickCount)
+            if (!LeeMethods.W.IsReady() || LeeMethods.W.Instance.Name == "blindmonkwtwo" ||
+                WaittingForWard > Environment.TickCount)
             {
                 return;
             }
@@ -79,7 +82,7 @@ namespace Leesin
                             (!(obj.Name.IndexOf("turret", StringComparison.InvariantCultureIgnoreCase) >= 0) &&
                              //Doesn't create a new substring KappaQ
                              Vector3.DistanceSquared(pos, obj.ServerPosition) <= 150 * 150));
-            if (jumpObject != null)
+            if (jumpObject != null && checkObjects)
             {
                 LeeMethods.W.CastOnUnit(jumpObject);
                 WaittingForWard = Environment.TickCount;
@@ -141,14 +144,15 @@ namespace Leesin
         public static List<Vector2> Rectangle(Vector2 startVector2, Vector2 endVector2, float radius)
         {
             var points = new List<Vector2>();
-            var perpendicular = startVector2.Perpendicular();
-            points[0] = startVector2.Extend(perpendicular, radius);
-            points[1] = startVector2.Extend(perpendicular, -radius);
+            var o = new Vector2(-endVector2.Y + startVector2.Y, endVector2.X - endVector2.Y);
+            var lenght = Math.Sqrt(o.X * o.X + o.Y * o.Y);
+            o.X = (float) (o.X / lenght * (radius * 2));
+            o.Y = (float) (o.Y / lenght * (radius * 2) / 2);
 
-            perpendicular = endVector2.Perpendicular();
-            points[2] = endVector2.Extend(perpendicular, radius);
-            points[3] = endVector2.Extend(perpendicular, -radius);
-
+            points.Add(startVector2 + o);
+            points.Add(startVector2 - o);
+            points.Add(endVector2 - o);
+            points.Add(endVector2 + o);
             return points;
         }
     }

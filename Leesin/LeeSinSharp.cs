@@ -3,6 +3,7 @@ using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using Color = System.Drawing.Color;
 
 namespace Leesin
 {
@@ -45,8 +46,9 @@ namespace Leesin
             {
                 return;
             }
-            var wardObject = (Obj_AI_Base)sender;
-            if (wardObject.Name.IndexOf("ward", StringComparison.InvariantCultureIgnoreCase) >= 0 && Vector3.DistanceSquared(sender.Position, LeeUtility.WardCastPosition) <= 150*150)
+            var wardObject = (Obj_AI_Base) sender;
+            if (wardObject.Name.IndexOf("ward", StringComparison.InvariantCultureIgnoreCase) >= 0 &&
+                Vector3.DistanceSquared(sender.Position, LeeUtility.WardCastPosition) <= 150 * 150)
             {
                 LeeMethods.W.Cast(wardObject);
             }
@@ -59,29 +61,47 @@ namespace Leesin
                 var menuItem = Config.Menu.Item(spell.Slot + "Draw").GetValue<Circle>();
                 if (menuItem.Active)
                 {
-                    Utility.DrawCircle(ObjectManager.Player.Position, spell.Range, menuItem.Color);                    
+                    Utility.DrawCircle(ObjectManager.Player.Position, spell.Range, menuItem.Color);
                 }
             }
+            try
+            {
+                /* var startPos = LeeMethods.Player.ServerPosition.To2D();
+                var endPos = LeeMethods.Player.ServerPosition.To2D().Extend(Game.CursorPos.To2D(), 1200);
+                Utility.DrawCircle(endPos.To3D(),10,Color.Red);
+                Utility.DrawCircle(startPos.To3D(), 10, Color.Red);
+
+                var rectangle = LeeUtility.Rectangle(startPos, endPos, LeeMethods.Player.BoundingRadius);
+                Console.WriteLine("hoe22");
+                Utility.DrawCircle(rectangle[0].To3D(), 10, Color.Red);
+                Utility.DrawCircle(rectangle[1].To3D(), 10, Color.Green);
+                Utility.DrawCircle(rectangle[2].To3D(), 10, Color.Blue);
+                Utility.DrawCircle(rectangle[3].To3D(), 10, Color.Black);
+
+                Drawing.DrawLine(Drawing.WorldToScreen(rectangle[0].To3D()), Drawing.WorldToScreen(rectangle[1].To3D()), 1, Color.Red);
+                Drawing.DrawLine(Drawing.WorldToScreen(rectangle[1].To3D()), Drawing.WorldToScreen(rectangle[2].To3D()), 1, Color.Green);
+                Drawing.DrawLine(Drawing.WorldToScreen(rectangle[2].To3D()), Drawing.WorldToScreen(rectangle[3].To3D()), 1, Color.Blue);
+                Drawing.DrawLine(Drawing.WorldToScreen(rectangle[3].To3D()), Drawing.WorldToScreen(rectangle[0].To3D()), 1, Color.Black);
+
+                var polygon = new Polygon(rectangle);
+                if (polygon.Contains(Game.CursorPos.To2D()))
+                {
+                    Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(Game.CursorPos.X, Game.CursorPos.Y)).Process();
+                }*/
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+            //var hero1 = hero;
+
             //Drawing.DrawText(100, 100, Color.White, "Harass Stage: " + LeeMethods.harassStage);
             //Console.WriteLine(ObjectManager.Player.BoundingRadius);
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            if (false && Config.Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
-            {
-                            var jungleMinions = MinionManager.GetMinions(
-                LeeMethods.Player.ServerPosition, LeeMethods.Q.Range, MinionTypes.All, MinionTeam.Neutral);
-                            foreach (var jungleMinion in jungleMinions.Where(
-                                    jungleMinion =>
-                                       LeeMethods.JungleCamps.Any(j => jungleMinion.Name.StartsWith(j)) ||
-                                        LeeMethods.SmallMinionCamps.Any(j => jungleMinion.Name.StartsWith(j))))
-                {
-                    Console.WriteLine(jungleMinion.Name);
-                    Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(jungleMinion.ServerPosition.X,jungleMinion.ServerPosition.Y)).Process();
-                                //LeeMethods.Player.SummonerSpellbook.CastSpell(LeeSinSharp.SmiteSlot, jungleMinion);
-                }
-            }
             try
             {
                 if (Config.Menu.Item("wardJump").GetValue<KeyBind>().Active)
@@ -104,7 +124,7 @@ namespace Leesin
                     LeeMethods.KSer();
                 }
 
-                Obj_AI_Hero target = SimpleTs.GetTarget(
+                var target = SimpleTs.GetTarget(
                     LeeMethods.Q.IsReady() ? LeeMethods.Q.Range : LeeMethods.R.Range, SimpleTs.DamageType.Physical);
                 LeeMethods.InsecCombo(target);
                 switch (Config.Orbwalker.ActiveMode)
@@ -131,16 +151,16 @@ namespace Leesin
 
         private static void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender.IsAlly || sender.Type.Equals(GameObjectType.obj_AI_Hero) ||
-                (((Obj_AI_Hero) sender).ChampionName != "Wukong" && ((Obj_AI_Hero) sender).ChampionName != "Akali") ||
-                Vector3.DistanceSquared(sender.ServerPosition, LeeMethods.Player.ServerPosition) <= 350 * 350 ||
-                !LeeMethods.E.IsReady(250))
+            if (sender.IsAlly || !sender.Type.Equals(GameObjectType.obj_AI_Hero) ||
+                (((Obj_AI_Hero) sender).ChampionName != "MonkeyKing" && ((Obj_AI_Hero) sender).ChampionName != "Akali") ||
+                Vector3.DistanceSquared(sender.ServerPosition, LeeMethods.Player.ServerPosition) >= 350 * 350 ||
+                !LeeMethods.E.IsReady())
             {
                 return;
             }
             if (args.SData.Name == "MonkeyKingDecoy" || args.SData.Name == "AkaliSmokeBomb")
             {
-                Utility.DelayAction.Add(250, () => LeeMethods.E.Cast());
+                LeeMethods.E.Cast();
             }
         }
     }
